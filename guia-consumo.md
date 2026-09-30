@@ -31,6 +31,23 @@ construir.
 ⚠️ **Tu credencial es personal y secreta.** No la subas a GitHub, no la compartas por chat y
 no la pongas en una página web pública. Si se filtra, se revoca y se emite otra al instante.
 
+### 🔒 Usa siempre `https://`
+
+La dirección del servicio empieza con **`https://`**, y la API **rechaza** cualquier llamada
+sin cifrado:
+
+```json
+{ "ok": false, "error": "https_requerido",
+  "message": "Esta API solo responde por HTTPS. Reintenta con https://" }
+```
+
+**Por qué:** tu credencial viaja **en cada consulta** (no hay una sesión que la rote), así que
+por `http://` cualquiera en la misma red podría leerla y usarla. El cifrado es lo que impide
+que eso pase.
+
+> **Si ves un `403 https_requerido`,** revisa que la dirección de tu consulta empiece con
+> **`https://`** y no con `http://`. Es el error más común cuando se copia una dirección a mano.
+
 ---
 
 ## 2. Dos formas de consumirla, elige la tuya
@@ -366,7 +383,7 @@ console.log(campos.columnas.map((c) => c.name));
 |---|---|
 | **Me responde `401`** | Tu credencial no es válida o la sesión caducó. Vuelve a autenticarte |
 | **Me responde `429`** | Superaste tu cuota de consultas. Espera lo que indica la respuesta. **Las consultas repetidas no consumen cuota**: si pides lo mismo enseguida, el sistema te devuelve el resultado ya calculado |
-| **Me responde `403`** | Estás consultando algo fuera de tus permisos (una sucursal o un tema que no te toca). Pide ampliación si lo necesitas |
+| **Me responde `403`** | Dos causas: **`https_requerido`** → tu dirección empieza con `http://`, cámbiala a `https://` (ver §1). Si no, estás consultando algo fuera de tus permisos (una sucursal o un tema que no te toca): pide ampliación |
 | **Me responde `400`** | El rango de fechas está mal, o pediste un campo que no existe |
 | **Tarda mucho la primera vez** | La primera consulta de un rango grande calcula; **las siguientes del mismo rango son inmediatas** (el resultado queda disponible un rato) |
 | **Quiero un rango muy largo** | Se consulta por ventanas. Divide el periodo y une los resultados |
