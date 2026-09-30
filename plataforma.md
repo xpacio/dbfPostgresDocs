@@ -139,18 +139,20 @@ reportes automatizados, hojas de cálculo vivas o asistentes de IA.
 ## Preguntas que cualquier persona puede hacerle
 
 Estas no son consultas técnicas: son las **preguntas de negocio** que la plataforma ya
-puede responder hoy.
+puede responder hoy. **Cada una tiene su receta lista para copiar** en
+[`guia-consumo.md`](guia-consumo.md#3-recetas-las-preguntas-de-negocio-resueltas) — el
+enlace te lleva directo al ejemplo.
 
-| Pregunta | A quién le sirve |
-|---|---|
-| ¿Qué tienda vendió más ayer? ¿Y la que menos? | Dirección |
-| ¿Cómo se compara una plaza contra otra en los últimos 90 días? | Dirección, compras |
-| ¿Qué notas de esta tienda tienen un monto inusualmente alto? | Auditoría |
-| ¿Qué producto lleva meses sin venderse en ninguna tienda? | Inventarios, compras |
-| ¿Dónde hay existencia de más y dónde falta, para mover entre tiendas? | Inventarios |
-| ¿Cómo se comporta un producto por día en las últimas semanas? | Compras |
-| ¿Qué tienda se sale del patrón del resto esta semana? | Dirección, auditoría |
-| ¿Qué se vendió un día específico del mes pasado, en detalle? | Auditoría |
+| Pregunta | A quién le sirve | Receta |
+|---|---|---|
+| ¿Qué tienda vendió más ayer? ¿Y la que menos? | Dirección | [Ver](guia-consumo.md#1-qué-tienda-vendió-más-ayer-y-la-que-menos) |
+| ¿Cómo se compara una plaza contra otra en los últimos 90 días? | Dirección, compras | [Ver](guia-consumo.md#2-cómo-se-compara-una-plaza-contra-otra-en-los-últimos-90-días) |
+| ¿Qué notas de esta tienda tienen un monto inusualmente alto? | Auditoría | [Ver](guia-consumo.md#3-qué-notas-de-esta-tienda-tienen-un-monto-inusualmente-alto) |
+| ¿Qué producto lleva meses sin venderse en ninguna tienda? | Inventarios, compras | [Ver](guia-consumo.md#4-qué-producto-lleva-meses-sin-venderse-en-ninguna-tienda) |
+| ¿Dónde hay existencia de más y dónde falta, para mover entre tiendas? | Inventarios | [Ver](guia-consumo.md#5-dónde-hay-existencia-de-más-y-dónde-falta-para-mover-entre-tiendas) |
+| ¿Cómo se comporta un producto por día en las últimas semanas? | Compras | [Ver](guia-consumo.md#6-cómo-se-comporta-un-producto-por-día-en-las-últimas-semanas) |
+| ¿Qué tienda se sale del patrón del resto esta semana? | Dirección, auditoría | [Ver](guia-consumo.md#7-qué-tienda-se-sale-del-patrón-del-resto-esta-semana) |
+| ¿Qué se vendió un día específico del mes pasado, en detalle? | Auditoría | [Ver](guia-consumo.md#8-qué-se-vendió-un-día-específico-del-mes-pasado-en-detalle) |
 
 ---
 

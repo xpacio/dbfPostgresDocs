@@ -15,7 +15,9 @@ propios desarrollos.
 | Si quieres… | Lee |
 |---|---|
 | **Entender qué es y qué aporta** (para dirección o para tu área) | [`plataforma.md`](plataforma.md) |
+| **Ver las preguntas que ya se pueden responder** | [`plataforma.md`](plataforma.md#preguntas-que-cualquier-persona-puede-hacerle) — cada una enlaza a su receta |
 | **Consumir la API desde tu desarrollo** | [`guia-consumo.md`](guia-consumo.md) |
+| **Copiar una consulta que ya funciona** | [`guia-consumo.md`](guia-consumo.md#3-recetas-las-preguntas-de-negocio-resueltas) — 8 recetas listas |
 | **Probar que tu credencial funciona**, sin instalar nada | [`probar.html`](probar.html) |
 
 ---
