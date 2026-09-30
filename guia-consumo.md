@@ -343,7 +343,7 @@ La API **se describe a sí misma**. Con una sola consulta obtienes:
 
 ```js
 const cat = await pedir('/api/v2/meta');
-// cat.dominios → [{ domain, columna_fecha, particiones, ejemplo }, ...]
+// cat.dominios → [{ domain, columna_fecha, ejemplo }, ...]
 // cat.endpoints, cat.filtro_where, cat.cuota, cat.max_days
 console.log(`${cat.dominios.length} temas disponibles`);
 console.table(cat.dominios.slice(0, 10));
