@@ -18,7 +18,7 @@ propios desarrollos.
 | **Ver las preguntas que ya se pueden responder** | [`plataforma.md`](plataforma.md#preguntas-que-cualquier-persona-puede-hacerle) — cada una enlaza a su receta |
 | **Consumir la API desde tu desarrollo** | [`guia-consumo.md`](guia-consumo.md) |
 | **Copiar una consulta que ya funciona** | [`guia-consumo.md`](guia-consumo.md#3-recetas-las-preguntas-de-negocio-resueltas) — 8 recetas listas |
-| **Probar que tu credencial funciona**, sin instalar nada | [`probar.html`](probar.html) |
+| **Probar que tu credencial funciona**, sin instalar nada | Descarga [`probar.html`](probar.html) a tu escritorio y ábrelo |
 
 ---
 
@@ -41,9 +41,12 @@ El detalle está en [`guia-consumo.md`](guia-consumo.md).
 
 ## Prueba rápida
 
-Abre [`probar.html`](probar.html) (o descárgalo y ábrelo con doble clic) y pega tu
-credencial. Verifica en unos segundos que puedes consultar y que los permisos de tu perfil
-son los que esperas.
+**Descarga `probar.html` a tu escritorio** y ábrelo con doble clic (o, si prefieres, ábrelo
+directamente en el navegador). Pega tu credencial y verifica en unos segundos que puedes
+consultar y que los permisos de tu perfil son los que esperas.
+
+> No hace falta instalar nada: es un archivo suelto. Funciona abierto desde tu computadora
+> igual que servido desde un sitio.
 
 ---
 
