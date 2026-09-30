@@ -4,6 +4,20 @@
 > asistentes de IA.
 > Si solo quieres entender qué aporta la plataforma, lee [`plataforma.md`](plataforma.md).
 
+**Esta guía es un punto de partida, no un techo.** La API cubre más de lo que aquí se
+documenta: hay decenas de temas consultables y formas de filtrar, ordenar y agrupar que no
+están todas en los ejemplos. Si encuentras un muro:
+
+- **Algo no funciona como dice la guía** → repórtalo (ver [§8](#8-algo-no-coincide)). Un
+  ejemplo roto es un error que hay que corregir, no algo con lo que tengas que lidiar.
+- **Necesitas algo que la API no hace hoy** → pídelo. Filtros nuevos, un indicador que no
+  existe, otra forma de agrupar, más rango: se solicita y se evalúa. **La API crece con lo
+  que las áreas necesitan**, no al revés.
+- **Necesitas más permisos o más cuota** → también se solicita; va con tu perfil.
+
+No te quedes con un "no se puede" sin preguntar: casi siempre hay una vía, o se puede
+construir.
+
 ---
 
 ## 1. Lo que necesitas para empezar
@@ -140,42 +154,59 @@ console.table(picos);   // { cplaza, ctienda, nota_fecha, notas, total_impto }
 
 ### 4. ¿Qué producto lleva meses sin venderse en ninguna tienda?
 
-Aquí hay dos pasos: la API te da los que **sí** vendieron; el "sin venderse" sale de
-comparar contra tu catálogo.
+La comparación es entre **lo vendido** y **el catálogo del cedis** (`lista`), que es la
+fuente de productos y precios de la operación.
+
+> **Cómo funciona `lista`:** trae los productos **según su fecha de modificación**, es decir
+> los que el área de precios **tocó** dentro del rango que pidas. No es una foto del
+> catálogo completo: es "qué cambió". Por eso, para esta pregunta, **usa un rango amplio**
+> (hasta el máximo que te permita tu perfil).
 
 ```js
+// 1) qué se vendió en los últimos 90 días
 const d = await pedir('/api/v2/partvta/agregate?cols=clave_art&sumas=imppar&desde=2026-07-01&hasta=2026-09-29');
+const vendidos = new Set(d.filas.map((f) => f.clave_art));
 
-const vendidos = new Set(d.filas.map((f) => f.clave_art));   // 648 artículos, p.ej.
-const catalogo = await pedir('/api/v2/catprod3/query?cols=clave_art&limite=500');
+// 2) el catálogo del cedis (rango amplio: trae lo modificado en ese periodo)
+const catalogo = await pedir('/api/v2/lista/query?cols=clave,prod_descr&desde=2026-07-01&hasta=2026-09-29&limite=500');
+//    pagina con &offset=500, 1000, ... si necesitas más
 
 const sinVenta = catalogo.registros
-  .map((r) => r.clave_art)
-  .filter((a) => !vendidos.has(a));
-console.log(`${sinVenta.length} productos sin una sola venta en el periodo`);
+  .filter((r) => !vendidos.has(r.clave))
+  .map((r) => ({ clave: r.clave, descripcion: r.prod_descr }));
+
+console.log(`${sinVenta.length} productos del catálogo sin una sola venta en el periodo`);
+console.table(sinVenta.slice(0, 20));
 ```
 
 *A quién sirve: inventarios, compras*
-*El catálogo de productos viene en `catprod3`. Ajusta el rango a "meses" si quieres
-literalmente varios meses.*
+*`lista` es **del cedis** (las tiendas tienen su propia copia, que hoy no está expuesta en
+la API). El campo `prod_descr` es la descripción y `clave` el código del producto.
+**La existencia no está aquí**: vive en el movimiento de inventario (receta 5).*
 
 ---
 
 ### 5. ¿Dónde hay existencia de más y dónde falta, para mover entre tiendas?
 
-El movimiento de inventario trae el resumen por sucursal.
+El movimiento de inventario da el total; para comparar **por zona**, pide una consulta por
+plaza.
 
 ```js
+// el total de la operación
 const d = await pedir('/api/v2/movsinv?desde=2026-09-01&hasta=2026-09-29');
+console.log('existencia total:', d.kpis.cantidad, '· valuada en', d.kpis.costo);
 
-console.log('total en la operación:', d.kpis.cantidad);      // existencia sumada
-const porTienda = [...d.por_sucursal].sort((a, b) => b.cantidad - a.cantidad);
-console.log('con más:', porTienda.slice(0, 3));
-console.log('con menos:', porTienda.slice(-3));
+// comparación por plaza (una consulta por plaza)
+for (const plaza of ['penla', 'bajac', 'xalap', 'hermo', 'nicar']) {
+  const p = await pedir(`/api/v2/movsinv?desde=2026-09-01&hasta=2026-09-29&plaza=${plaza}`);
+  console.log(plaza, '->', p.kpis.cantidad);
+}
 ```
 
 *A quién sirve: inventarios*
-*`plaza=` acota a una plaza. Con `&rbfids=<tienda>` te concentras en una sucursal.*
+*El desglose **por tienda** se pide una vez por tienda con `&rbfids=<tienda>`. No hay una
+consulta que agrupe por sucursal, así que empieza por plaza (5 llamadas) y baja al detalle
+solo donde haga falta.*
 
 ---
 
@@ -227,8 +258,11 @@ El detalle de partidas está en `cunota`. Filtra por la nota o por el rango del 
 const nota = await pedir('/api/v2/cunota/query?cols=nota_folio,prod_clave,nota_canti,nota_preci'
   + '&filtro=' + encodeURIComponent('nota_folio = 150090') + '&limite=50');
 
-// (b) todo lo vendido en una fecha (vía el encabezado de notas)
+// (b) todo lo vendido en una fecha
+//     OJO: si no pasas desde/hasta, la consulta mira solo los últimos 7 días.
+//     Pasa el rango que incluya tu fecha.
 const dia = await pedir('/api/v2/canota/query?cols=nota_folio,nota_fecha,clie_clave,nota_impor'
+  + '&desde=2026-09-15&hasta=2026-09-15'
   + '&filtro=' + encodeURIComponent('nota_fecha = 2026-09-15') + '&limite=500');
 
 console.table(nota.registros);
@@ -236,11 +270,97 @@ console.table(dia.registros);
 ```
 
 *A quién sirve: auditoría*
-*`limite` llega hasta 500; para más, pagina con `offset`.*
+*`limite` llega hasta 500; para más, pagina con `offset`. **Regla general:** siempre pasa
+`desde`/`hasta` explícitos, para no depender del rango por defecto.*
 
 ---
 
-## 4. Preguntas frecuentes (las que de verdad se hacen)
+## 4. Filtrar, ordenar y agrupar
+
+Estas tres piezas se combinan con cualquier consulta, y son las que convierten una consulta
+en la respuesta que necesitas.
+
+### 4.1 Filtrar (`filtro`)
+
+Se usa en `query` y `agregate`. Son condiciones separadas por `;`, cada una
+`campo operador valor`:
+
+```
+filtro=clave_art = H023910
+filtro=nota_impor >= 1000;clie_clave <> ''
+filtro=prod_descr LIKE %INTER%
+```
+
+| Operador | Significa |
+|---|---|
+| `=` | igual |
+| `<>` o `!=` | distinto |
+| `<` / `>` | menor / mayor |
+| `<=` / `>=` | menor o igual / mayor o igual |
+| `LIKE` | busca texto — **necesita los comodines `%`** |
+
+⚠️ **Tres cuidados al filtrar:**
+
+1. **`LIKE` con `%`.** Para "contiene", rodea el término: `LIKE %INTER%` (18 resultados).
+   **Sin los `%` busca coincidencia exacta** y te devuelve 0 (`LIKE INTER` → 0). Usa
+   `LIKE INTER%` para "empieza con" y `LIKE %INTER` para "termina con".
+2. **Espacios siempre** (`campo = valor`). Si el operador está mal escrito, el servicio puede
+   tomarlo como parte del valor y devolverte un resultado **silenciosamente equivocado**.
+3. **El filtro de fecha sigue aplicando.** Toda consulta mira un rango (`desde`/`hasta`), así
+   que un filtro por texto sobre un rango que no lo contiene devuelve `total: 0`. Si buscas
+   por descripción y sale vacío, **amplía el rango** antes de dudar del filtro.
+
+### 4.2 Ordenar y paginar (`query`)
+
+| Parámetro | Para qué | Límite |
+|---|---|---|
+| `orden` | campo por el que ordenar | debe existir |
+| `dir` | `asc` o `desc` | — |
+| `limite` | cuántos registros traer | **máximo 500** |
+| `offset` | desde cuál empezar (para paginar) | — |
+
+### 4.3 Agrupar y sumar (`agregate`)
+
+| Parámetro | Para qué | Límite |
+|---|---|---|
+| `cols` | campos por los que agrupar (csv) | deben existir |
+| `sumas` | campos numéricos a sumar (csv) | **máximo 8** |
+| `tipo` | además, agrupar por periodo: `daily`, `weekly`, `monthly` | — |
+
+Devuelve `filas[]` con un grupo por fila y `resumen` con los totales.
+
+### 4.4 Fechas: siempre explícitas
+
+Todas las consultas aceptan `desde` y `hasta` (`YYYY-MM-DD`). **Pásalos siempre**:
+
+- Si los omites, el rango por defecto son los **últimos 7 días**, y tu filtro por una fecha
+  anterior devolverá `total: 0` sin explicar por qué.
+- El rango máximo lo fija tu perfil (te lo dice el catálogo al autenticarte).
+
+### 4.5 Qué puedes consultar (el catálogo)
+
+La API **se describe a sí misma**. Con una sola consulta obtienes:
+
+```js
+const cat = await pedir('/api/v2/meta');
+// cat.dominios → [{ domain, columna_fecha, particiones, ejemplo }, ...]
+// cat.endpoints, cat.filtro_where, cat.cuota, cat.max_days
+console.log(`${cat.dominios.length} temas disponibles`);
+console.table(cat.dominios.slice(0, 10));
+```
+
+**Esto es lo primero que conviene mirar** al empezar: te dice qué temas hay, cuál es su
+campo de fecha y un ejemplo de consulta. Y si un campo te da error, `explore` te lista los
+campos reales de ese tema:
+
+```js
+const campos = await pedir('/api/v2/<tema>/explore');
+console.log(campos.columnas.map((c) => c.name));
+```
+
+---
+
+## 5. Preguntas frecuentes (las que de verdad se hacen)
 
 | Situación | Qué hacer |
 |---|---|
@@ -255,7 +375,7 @@ console.table(dia.registros);
 
 ---
 
-## 5. Buenas prácticas
+## 6. Buenas prácticas
 
 1. **No pidas todo.** Filtra por sucursal y por rango; cuanto más acotada la consulta, más
    rápido responde para todos.
@@ -270,14 +390,14 @@ console.table(dia.registros);
 
 ---
 
-## 6. Cómo saber si algo cambió
+## 7. Cómo saber si algo cambió
 
 Cada respuesta trae la fecha y hora en que se calculó el dato, y si vino del cálculo o de un
 resultado ya guardado. Cuando publiquemos cambios en la API, se avisan en este repositorio.
 
 ---
 
-## 7. ¿Algo no coincide?
+## 8. ¿Algo no coincide?
 
 Si la API responde distinto a lo que dice esta guía, **es un error que hay que corregir**.
 Abre un *issue* con:
