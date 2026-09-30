@@ -92,9 +92,9 @@ Esta vía es la correcta cuando la credencial no puede salir de tu servidor.
 
 ---
 
-## 3. Recetas: las preguntas de negocio, resueltas
+## 3. Ejemplos: las preguntas de negocio, resueltas
 
-Cada receta es una consulta que **ya funciona**. Copia, pega, cambia las fechas y tendrás
+Cada ejemplo es una consulta que **ya funciona**. Copia, pega, cambia las fechas y tendrás
 datos de tu operación. Usan la vía directa (la credencial en la cabecera).
 
 Todas asumen estas dos líneas al inicio:
@@ -199,7 +199,7 @@ console.table(sinVenta.slice(0, 20));
 *A quién sirve: inventarios, compras*
 *`lista` es **del cedis** (las tiendas tienen su propia copia, que hoy no está expuesta en
 la API). El campo `prod_descr` es la descripción y `clave` el código del producto.
-**La existencia no está aquí**: vive en el movimiento de inventario (receta 5).*
+**La existencia no está aquí**: vive en el movimiento de inventario (ejemplo 5).*
 
 ---
 
