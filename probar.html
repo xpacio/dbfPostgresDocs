@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probar mi credencial — Plataforma de datos</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background:#0b1220; color:#dbeafe; padding:1.5rem; max-width:880px; margin:auto; line-height:1.55; }
+  h1 { font-size:1.15rem; color:#7dd3fc; margin-bottom:.25rem; }
+  p.sub { color:#94a3b8; margin-top:0; font-size:.85rem; }
+  fieldset { border:1px solid #1e293b; border-radius:8px; padding:.9rem 1rem; margin-bottom:1rem; }
+  legend { color:#7dd3fc; font-size:.85rem; padding:0 .4rem; }
+  label { display:block; font-size:.8rem; color:#94a3b8; margin-top:.5rem; }
+  input { width:100%; background:#111c33; border:1px solid #24344d; color:#dbeafe;
+          border-radius:6px; padding:.45rem .6rem; font:inherit; }
+  button { background:#2563eb; color:#fff; border:0; border-radius:6px; padding:.5rem 1rem;
+           font:inherit; cursor:pointer; margin-top:.8rem; }
+  button:hover { background:#1d4ed8; }
+  pre { background:#111c33; padding:.9rem; border-radius:8px; white-space:pre-wrap; word-break:break-word;
+        font-size:.82rem; min-height:6rem; }
+  .ok { color:#4ade80; } .bad { color:#f87171; } .warn { color:#fbbf24; } .k { color:#a5b4fc; } .dim { color:#64748b; }
+  .warnbox { border-left:3px solid #fbbf24; background:#1c1917; padding:.6rem .9rem; border-radius:6px;
+             font-size:.8rem; color:#fde68a; margin-bottom:1rem; }
+</style>
+</head>
+<body>
+
+<h1>Probar mi credencial</h1>
+<p class="sub">
+  Verifica en unos segundos que tu credencial funciona y que tus permisos son los que
+  esperas. No instala nada: funciona abriendo este archivo con doble clic.
+</p>
+
+<div class="warnbox">
+  <strong>Tu credencial es secreta.</strong> Esta página la usa en tu navegador y no la
+  envía a ningún otro sitio. No dejes este archivo con la credencial escrita en una
+  computadora compartida. Para un tablero, lee
+  <a href="guia-consumo.md" style="color:#fbbf24">la guía de consumo</a>.
+</div>
+
+<fieldset>
+  <legend>Datos de conexión</legend>
+  <label for="base">Dirección del servicio</label>
+  <input id="base" value="https://dbfpostgres.servicios.care">
+  <label for="key">Tu credencial</label>
+  <input id="key" placeholder="pégala aquí" autocomplete="off">
+  <button id="go">Probar</button>
+</fieldset>
+
+<pre id="out" class="dim">Completa la dirección y tu credencial, y pulsa «Probar».</pre>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const out = $('out');
+  const log = [];
+  const say = (c, t) => { log.push(`<span class="${c}">${t}</span>`); };
+  const draw = () => { out.innerHTML = log.join('\n'); };
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* algunos navegadores no lo permiten */ } },
+  };
+  $('base').value = store.get('api_base') || 'https://dbfpostgres.servicios.care';
+
+  async function correr() {
+    log.length = 0;
+    const base = $('base').value.trim().replace(/\/+$/, '');
+    const key = $('key').value.trim();
+    store.set('api_base', base);
+
+    if (!key) { say('bad', 'Falta tu credencial.'); draw(); return; }
+
+    say('k', '══ Paso 1: ¿la credencial es válida?');
+    draw();
+
+    let catalogo = null;
+    try {
+      const r = await fetch(base + '/api/v2/meta', { headers: { 'X-Api-Key': key } });
+      const d = await r.json();
+
+      if (r.status === 401) {
+        say('bad', 'La credencial NO es válida (o está desactivada).');
+        say('k', 'Pide una nueva al área que administra la plataforma.');
+        draw(); return;
+      }
+      if (r.status === 403) {
+        say('bad', 'Tu credencial no tiene acceso a esta vía de consumo.');
+        say('k', 'Pide que revisen tus permisos.');
+        draw(); return;
+      }
+      if (!r.ok) {
+        say('bad', 'Respuesta inesperada: ' + r.status);
+        say('k', JSON.stringify(d));
+        draw(); return;
+      }
+
+      catalogo = d;
+      say('ok', '✓ Credencial válida.');
+      say('k', '   Tu perfil: ' + (d.perfil || '(sin nombre)'));
+      say('k', '   Cuota: ' + (d.cuota ? `${d.cuota.max} consultas cada ${d.cuota.ventana_s}s (las repetidas no consumen)` : '—'));
+    } catch (e) {
+      say('bad', 'No se pudo conectar: ' + e.message);
+      say('k', 'Revisa la dirección del servicio, tu conexión, o si estás en la red de la empresa.');
+      draw(); return;
+    }
+
+    say('k', '');
+    say('k', '══ Paso 2: ¿qué información ves y de qué sucursales?');
+    draw();
+    try {
+      const temas = (catalogo.dominios || []).map((d) => d.domain);
+      const rango = catalogo.max_days ? `hasta ${catalogo.max_days} días por consulta` : '—';
+      say('ok', `✓ ${temas.length} temas disponibles`);
+      if (temas.length) say('k', '   ' + temas.slice(0, 12).join(', ') + (temas.length > 12 ? ` … (+${temas.length - 12})` : ''));
+      say('k', '   Rango máximo: ' + rango);
+    } catch (e) {
+      say('warn', 'No se pudo leer el catálogo.');
+    }
+
+    say('k', '');
+    say('k', '══ Paso 3: una consulta real');
+    draw();
+    try {
+      const r = await fetch(base + '/api/v2/canota?desde=2026-09-01&hasta=2026-09-02&periodo=daily',
+                            { headers: { 'X-Api-Key': key } });
+      const d = await r.json();
+      if (!r.ok) {
+        say(r.status === 403 ? 'warn' : 'bad', `La consulta devolvió ${r.status} (${d.error || 'sin detalle'}).`);
+        say('k', '   Eso significa que tu credencial no alcanza ese tema o esas sucursales.');
+      } else {
+        say('ok', '✓ Consulta exitosa.');
+        say('k', '   Datos calculados: ' + (d.meta ? d.meta.generated_at : '—'));
+        say('k', '   ' + JSON.stringify(d.kpis || {}).slice(0, 120));
+      }
+    } catch (e) {
+      say('bad', 'Falló la consulta: ' + e.message);
+    }
+
+    say('k', '');
+    say('ok', '══ Listo. Si los tres pasos dieron ✓, ya puedes construir sobre la API.');
+    say('dim', '   Siguiente: guia-consumo.md');
+    draw();
+  }
+
+  $('go').addEventListener('click', correr);
+  $('key').addEventListener('keydown', (e) => { if (e.key === 'Enter') correr(); });
+})();
+</script>
+</body>
+</html>
